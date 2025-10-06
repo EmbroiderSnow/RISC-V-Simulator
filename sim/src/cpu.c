@@ -7,7 +7,7 @@ static int running = 1;
 
 void init_cpu(){
     cpu.pc = MEM_BASE;
-    cpu.reg[0] = 0;
+    memset(cpu.reg, 0, sizeof(cpu.reg));
 }
 
  
@@ -18,6 +18,12 @@ static void exec_once(){
     s.snpc = s.pc + 4;
     decode_exec(&s);
     cpu.pc = s.dnpc;
+}
+
+void exec_single_inst(uint32_t inst) {
+    Decode s;
+    s.inst = inst;
+    decode_exec(&s);
 }
 
 void cpu_exec(){

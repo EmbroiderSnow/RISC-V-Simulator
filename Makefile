@@ -9,8 +9,12 @@ all:
 	@echo "-------Start Simulation-------"
 	@$(SIM) $(TARGET)
 
+unit_test:
+	@echo "------- Building and Running Simulator Unit Tests -------"
+	@$(MAKE) -C sim unit_test
+
 clean:
 	@$(MAKE) -C sim clean
 	@$(MAKE) -C test clean
 
-.PHONY: clean all
+.PHONY: clean all unit_test
