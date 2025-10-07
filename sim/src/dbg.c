@@ -36,6 +36,13 @@ static void cmd_info(char arg) {
     }
 }
 
-static void cmd_examine(char *args) {
-    // TODO: implement examine command
+static void cmd_examine(int len, uint64_t addr) {
+    check_mem(addr)
+    for (int i = 0; i < len; ++i) {
+        uint32_t data = mem_read(addr + i * 4, 4);
+        printf("0x%016lx: 0x%08x\n", addr + i * 4, data);
+    }
+error:
+    printf("Invalid memory address 0x%lx\n", addr);
+    return;
 }

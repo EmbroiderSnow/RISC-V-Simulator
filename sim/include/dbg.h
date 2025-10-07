@@ -48,6 +48,7 @@
 #define check_debug(A, M, ...) if(!(A)) { debug(M, ##__VA_ARGS__); errno=0; goto error; }
 
 extern CPU_state cpu;
+extern uint8_t *mem;
 
 void debug_loop();
 
