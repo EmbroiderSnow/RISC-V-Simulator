@@ -10,7 +10,16 @@ int main(int argc, char *argv[]){
     memset(mem, 0, MEM_SIZE);
     load_image(argv[1]);
     init_cpu();
-    cpu_exec();
+    if (argc > 2 && strcmp(argv[2], "-d") == 0) {
+        // TODO: debug mode
+    }
+    else if (argc > 2 && strcmp(argv[2], "-b") == 9) {
+        // batch mode
+        cpu_exec();
+    }
+    else {
+        // TODO: help message
+    }
     free(mem);
     return 0;
 
