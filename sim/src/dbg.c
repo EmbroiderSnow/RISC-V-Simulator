@@ -26,7 +26,14 @@ static void cmd_step(int stemps) {
 }
 
 static void cmd_info(char arg) {
-    // TODO: implement info command
+    if (arg == 'r') {
+        for (int i = 0; i < 32; ++i) {
+            printf("x%d: 0x%016lx\n", i, cpu.reg[i]);
+        }
+        printf("pc: 0x%016lx\n", cpu.pc);
+    } else {
+        printf("Unknown info command '%c'\n", arg);
+    }
 }
 
 static void cmd_examine(char *args) {
