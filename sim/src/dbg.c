@@ -12,7 +12,7 @@ static void cmd_help() {
 }
 
 static void cmd_continue() {
-    // TODO: implement continue command
+    cpu_exec();
 }
 
 static void cmd_quit() {
