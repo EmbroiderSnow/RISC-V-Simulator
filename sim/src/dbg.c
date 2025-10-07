@@ -20,7 +20,9 @@ static void cmd_quit() {
 }
 
 static void cmd_step(int stemps) {
-    // TODO: implement step command
+    for (int i = 0; i < stemps; ++i) {
+        exec_once();
+    }
 }
 
 static void cmd_info(char arg) {
