@@ -1,6 +1,14 @@
 #include <cpu.h>
 #include <memory.h>
 #include <common.h>
+#include <dbg.h>
+
+const char* riscv_abi_names[32] = {
+    "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
+    "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5",
+    "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7",
+    "s8", "s9", "s10","s11","t3","t4","t5","t6"
+};
 
 static void cmd_help() {
     printf("Available commands:\n");
@@ -23,29 +31,30 @@ static void cmd_quit() {
 static void cmd_step(int stemps) {
     for (int i = 0; i < stemps; ++i) {
         exec_once();
+        // TODO: print pc and current instruction
     }
 }
 
 static void cmd_info(char arg) {
     if (arg == 'r') {
         for (int i = 0; i < 32; ++i) {
-            printf("x%d: 0x%016lx\n", i, cpu.reg[i]);
+            char reg_id[5];
+            sprintf(reg_id, "x%d", i);
+            char reg_name[6];
+            sprintf(reg_name, "(%s)", riscv_abi_names[i]);
+            printf("%-4s %-6s : 0x%016lx\n", reg_id, reg_name, cpu.reg[i]);
         }
-        printf("pc: 0x%016lx\n", cpu.pc);
+        printf("pc          : 0x%016lx\n", cpu.pc);
     } else {
         printf("Unknown info command '%c'\n", arg);
     }
 }
 
 static void cmd_examine(int len, uint64_t addr) {
-    check_mem(addr)
     for (int i = 0; i < len; ++i) {
         uint32_t data = mem_read(addr + i * 4, 4);
         printf("0x%016lx: 0x%08x\n", addr + i * 4, data);
     }
-error:
-    printf("Invalid memory address 0x%lx\n", addr);
-    return;
 }
 
 void debug_loop() {
