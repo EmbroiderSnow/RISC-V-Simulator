@@ -3,6 +3,7 @@
 #include <pattern.h>
 #include <cpu.h>
 #include <memory.h>
+#include <decode.h>
 
 extern CPU_state cpu;
 

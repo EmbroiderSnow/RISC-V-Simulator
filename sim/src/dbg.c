@@ -1,4 +1,5 @@
 #include <cpu.h>
+#include <memory.h>
 #include <common.h>
 
 static void cmd_help() {
@@ -45,4 +46,48 @@ static void cmd_examine(int len, uint64_t addr) {
 error:
     printf("Invalid memory address 0x%lx\n", addr);
     return;
+}
+
+void debug_loop() {
+    char line[256];
+    while (1) {
+        printf("(simdb) ");
+        if (!fgets(line, sizeof(line), stdin)) {
+            break;
+        }
+
+        char *cmd = strtok(line, " \n");
+        if (!cmd) continue;
+
+        if (strcmp(cmd, "help") == 0) {
+            cmd_help();
+        } else if (strcmp(cmd, "c") == 0) {
+            cmd_continue();
+        } else if (strcmp(cmd, "q") == 0) {
+            cmd_quit();
+        } else if (strcmp(cmd, "si") == 0) {
+            char *arg = strtok(NULL, " \n");
+            int steps = arg ? atoi(arg) : 1;
+            cmd_step(steps);
+        } else if (strcmp(cmd, "info") == 0) {
+            char *arg = strtok(NULL, " \n");
+            if (arg) {
+                cmd_info(arg[0]);
+            } else {
+                printf("Usage: info r\n");
+            }
+        } else if (strcmp(cmd, "x") == 0) {
+            char *len_str = strtok(NULL, " \n");
+            char *addr_str = strtok(NULL, " \n");
+            if (len_str && addr_str) {
+                int len = atoi(len_str);
+                uint64_t addr = strtoull(addr_str, NULL, 0);
+                cmd_examine(len, addr);
+            } else {
+                printf("Usage: x <len> <addr>\n");
+            }
+        } else {
+            printf("Unknown command '%s'. Type 'help' for a list of commands.\n", cmd);
+        }
+    }
 }

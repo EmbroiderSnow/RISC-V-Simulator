@@ -1,6 +1,8 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
+#include <stdint.h>
+
 void load_image(char *filepath);
 uint8_t* guest_to_host(uint64_t vaddr);
 uint32_t inst_fetch(uint64_t pc);

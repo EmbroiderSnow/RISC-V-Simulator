@@ -11,7 +11,7 @@ void init_cpu(){
 }
 
  
-static void exec_once(){
+void exec_once(){
     Decode s;
     s.pc   = cpu.pc;
     s.inst = inst_fetch(s.pc);
