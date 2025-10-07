@@ -2,7 +2,13 @@
 #include <common.h>
 
 static void cmd_help() {
-    // TODO: implement help command
+    printf("Available commands:\n");
+    printf("  help - Display this help message\n");
+    printf("  c    - Continue execution\n");
+    printf("  q    - Quit the simulator\n");
+    printf("  si   - Step execution by specified number of instructions\n");
+    printf("  info - Display information about registers\n");
+    printf("  x    - Examine memory\n");
 }
 
 static void cmd_continue() {
