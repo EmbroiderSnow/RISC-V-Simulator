@@ -16,7 +16,7 @@ static void cmd_continue() {
 }
 
 static void cmd_quit() {
-    // TODO: implement quit command
+    exit(0);
 }
 
 static void cmd_step(int stemps) {
