@@ -53,7 +53,13 @@ static void cmd_info(char arg) {
 static void cmd_examine(int len, uint64_t addr) {
     for (int i = 0; i < len; ++i) {
         uint32_t data = mem_read(addr + i * 4, 4);
-        printf("0x%016lx: 0x%08x\n", addr + i * 4, data);
+        if (i % 4 == 0) {
+            printf("\33[1;34m0x%016lx\33[1;0m: ", addr + i * 4);
+        }
+        printf("0x%08x ", data);
+        if (i % 4 == 3 || i == len - 1) {
+            printf("\n");
+        }
     }
 }
 
