@@ -42,9 +42,9 @@ static void cmd_info(char arg) {
             sprintf(reg_id, "x%d", i);
             char reg_name[6];
             sprintf(reg_name, "(%s)", riscv_abi_names[i]);
-            printf("%-4s %-6s : 0x%016lx\n", reg_id, reg_name, cpu.reg[i]);
+            printf("\33[1;34m%-4s %-6s\33[1;0m : 0x%016lx\n", reg_id, reg_name, cpu.reg[i]);
         }
-        printf("pc          : 0x%016lx\n", cpu.pc);
+        printf("\33[1;34mpc\33[1;0m          : 0x%016lx\n", cpu.pc);
     } else {
         printf("Unknown info command '%c'\n", arg);
     }
