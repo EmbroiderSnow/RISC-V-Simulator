@@ -26,5 +26,5 @@ jobs:
             echo "🚀 Running test: $test_name"
             echo "---"
             
-            make T="$test_name"
+            make T="$test_name" 2>&1 | tee /dev/stderr | grep -q "HIT GOOD TRAP"
           done
