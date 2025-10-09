@@ -11,6 +11,7 @@ extern CPU_state cpu;
 #define Mr mem_read
 #define Mw mem_write
 #define HALT(thispc, code) halt_trap(thispc, code)
+#define NOP do {} while(0)
 
 enum {
   TYPE_I, TYPE_U, TYPE_S,
@@ -115,6 +116,8 @@ void decode_exec(Decode *s){
     INSTPAT("0000000 ????? ????? 101 ????? 01110 11", srlw   , R, R(rd) = SEXT((uint32_t)src1 >> (src2 & 0x1f), 32));
     INSTPAT("0100000 ????? ????? 101 ????? 01110 11", sraw   , R, R(rd) = SEXT((int32_t)src1 >> (src2 & 0x1f), 32));
     // FENCE, FENCE.I
+    INSTPAT("0000??? ????? 00000 000 00000 00011 11", fence  , I, NOP);
+    INSTPAT("0000000 00000 00000 000 00000 00011 11", fencei , I, NOP);
     // ECALL
     INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , N, HALT(s->pc, R(10))); // R(10) is $a0
     // CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI
