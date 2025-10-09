@@ -18,7 +18,7 @@ int main(int argc, char *argv[]){
     if (argc > 2 && strcmp(argv[2], "-d") == 0) {
         debug_loop();
     }
-    else if (argc > 2 && strcmp(argv[2], "-b") == 9) {
+    else if (argc > 2 && strcmp(argv[2], "-b") == 0) {
         cpu_exec();
     }
     else {
