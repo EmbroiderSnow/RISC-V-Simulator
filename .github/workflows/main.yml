@@ -7,37 +7,6 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-run-tests:
-    runs-on: ubuntu-latest
-
-    container:
-      image: docker.io/harsonlau/riscv-tools:latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Run All Tests
-        run: |
-          set -e
-          for test_file in test/src/*.c; do
-            test_name=$(basename "$test_file" .c)
-            
-            echo "---"
-            echo "🚀 Running test: $test_name"
-            echo "---"
-            
-            make T="$test_name" 2>&1 | tee /dev/stderr | grep -q "HIT GOOD TRAP"
-          done
-
-name: RISC-V Simulator CI
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-jobs:
   build-simulator:
     runs-on: ubuntu-latest
     container:
