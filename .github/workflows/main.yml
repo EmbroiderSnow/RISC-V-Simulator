@@ -28,3 +28,63 @@ jobs:
             
             make T="$test_name" 2>&1 | tee /dev/stderr | grep -q "HIT GOOD TRAP"
           done
+
+name: RISC-V Simulator CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-simulator:
+    runs-on: ubuntu-latest
+    container:
+      image: docker.io/harsonlau/riscv-tools:latest
+      
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build Simulator
+        run: make -C sim
+
+      - name: Upload Simulator Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: simulator-build
+          path: sim/build
+
+  run-all-tests:
+    needs: build-simulator
+    runs-on: ubuntu-latest
+    container:
+      image: docker.io/harsonlau/riscv-tools:latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        test_name: [
+          'ackermann', 
+          'add',
+          'div',
+          'dummy',
+          'if-else',
+          'load-store',
+          'matrix-mul',
+          'quicksort',
+          'shift',
+          'unalign'
+          ]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download Simulator Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: simulator-build
+          path: sim/build
+      
+      - name: Run Test (${{ matrix.test_name }})
+        run: make T=${{ matrix.test_name }} 2>&1 | tee /dev/stderr | grep -q "HIT GOOD TRAP"
