@@ -1,8 +1,0 @@
-{
-    "files.associations": {
-        "memory.h": "c",
-        "common.h": "c",
-        "inst_test.h": "c",
-        "cpu.h": "c"
-    }
-}
