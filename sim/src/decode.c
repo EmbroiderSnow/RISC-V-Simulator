@@ -117,13 +117,29 @@ void decode_exec(Decode *s){
     // FENCE, FENCE.I
     INSTPAT("0000??? ????? 00000 000 00000 00011 11", fence  , N, NOP);
     INSTPAT("0000000 00000 00000 000 00000 00011 11", fencei , N, NOP);
-    // ECALL
     INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , N, HALT(s->pc, R(10))); // R(10) is $a0
+
+    // Related to System Calls
+    // ECALL
     // CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI
 
     // RV64M
     // MUL, MULH, MULHSU, MULHU, DIV, DIVU, REM, REMU
+    INSTPAT("0000001 ????? ????? 000 ????? 01100 11", mul    , R, R(rd) = src1 * src2);
+    INSTPAT("0000001 ????? ????? 001 ????? 01100 11", mulh   , R, R(rd) = (int64_t)((__int128_t)(int64_t)src1 * (__int128_t)(int64_t)src2 >> 64));
+    INSTPAT("0000001 ????? ????? 010 ????? 01100 11", mulhsu , R, R(rd) = (int64_t)((__int128_t)(int64_t)src1 * (__int128_t)(uint64_t)src2 >> 64));
+    INSTPAT("0000001 ????? ????? 011 ????? 01100 11", mulhu  , R, R(rd) = (uint64_t)((__uint128_t)(uint64_t)src1 * (__uint128_t)(uint64_t)src2 >> 64));
+    INSTPAT("0000001 ????? ????? 100 ????? 01100 11", div    , R, if (src2 == 0) R(rd) = -1; else R(rd) = (int64_t)src1 / (int64_t)src2);
+    INSTPAT("0000001 ????? ????? 101 ????? 01100 11", divu   , R, if (src2 == 0) R(rd) = -1; else R(rd) = src1 / src2);
+    INSTPAT("0000001 ????? ????? 110 ????? 01100 11", rem    , R, if (src2 == 0) R(rd) = src1; else R(rd) = (int64_t)src1 % (int64_t)src2);
+    INSTPAT("0000001 ????? ????? 111 ????? 01100 11", remu   , R, if (src2 == 0) R(rd) = src1; else R(rd) = src1 % src2);
+
     // MULW, DIVW, DIVUW, REMW, REMUW
+    INSTPAT("0000001 ????? ????? 000 ????? 01110 11", mulw   , R, R(rd) = SEXT((int32_t)src1 * (int32_t)src2, 32));
+    INSTPAT("0000001 ????? ????? 100 ????? 01110 11", divw   , R, if (src2 == 0) R(rd) = -1; else R(rd) = SEXT((int32_t)(int64_t)src1 / (int32_t)(int64_t)src2, 32));
+    INSTPAT("0000001 ????? ????? 101 ????? 01110 11", divuw  , R, if (src2 == 0) R(rd) = -1; else R(rd) = SEXT((uint32_t)(uint64_t)src1 / (uint32_t)(uint64_t)src2, 32));
+    INSTPAT("0000001 ????? ????? 110 ????? 01110 11", remw   , R, if (src2 == 0) R(rd) = SEXT((uint32_t)src1, 32); else R(rd) = SEXT((int32_t)(int64_t)src1 % (int32_t)(int64_t)src2, 32));
+    INSTPAT("0000001 ????? ????? 111 ????? 01110 11", remuw  , R, if (src2 == 0) R(rd) = SEXT((uint32_t)src1, 32); else R(rd) = SEXT((uint32_t)(uint64_t)src1 % (uint32_t)(uint64_t)src2, 32));
 
     //Invalid Opcode
     INSTPAT("??????? ????? ????? ??? ????? ????? ??", unk    , N, printf(ANSI_FMT("Unknown Inst!\n", ANSI_FG_RED)), HALT(s->pc, -1));
