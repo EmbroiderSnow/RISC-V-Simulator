@@ -8,6 +8,7 @@ static int running = 1;
 void init_cpu(){
     cpu.pc = MEM_BASE;
     memset(cpu.reg, 0, sizeof(cpu.reg));
+    memset(cpu.csr, 0, sizeof(cpu.csr));
 }
 
  

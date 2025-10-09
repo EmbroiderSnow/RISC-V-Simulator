@@ -4,6 +4,7 @@
 #include <cpu.h>
 #include <memory.h>
 #include <decode.h>
+#include <trap.h>
 
 extern CPU_state cpu;
 
@@ -45,6 +46,13 @@ static void decode_operand(Decode *s, int *rd, uint64_t *src1, uint64_t *src2, u
         case TYPE_J:                   immJ(); break;
     }
 }
+
+static void ecall_handler(Decode *s) {
+    cpu.csr[CSR_MEPC] = s->snpc;
+    cpu.csr[CSR_MCAUSE] = 8;
+    handle_syscall(s);
+}
+
 void decode_exec(Decode *s){
     int rd = 0;
     uint64_t src1 = 0, src2 = 0, imm = 0;
@@ -121,6 +129,7 @@ void decode_exec(Decode *s){
 
     // Related to System Calls
     // ECALL
+    INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall  , N, ecall_handler(s));
     // CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI
 
     // RV64M
