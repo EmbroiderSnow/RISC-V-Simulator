@@ -1,8 +1,9 @@
 version: '3.8'
 services:
   dev:
-    image: docker.io/harsonlau/riscv-tools:latest
+    build: .  
     volumes:
       - .:/simulator
     working_dir: /simulator
-    command: tail -f /dev/null
+    command: 
+      tail -f /dev/null

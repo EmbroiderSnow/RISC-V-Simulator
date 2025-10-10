@@ -3,6 +3,21 @@
 #include <common.h>
 #include <dbg.h>
 #include <decode.h>
+#include <llvm-c/Disassembler.h>
+
+LLVMDisasmContextRef init_disasm(const char *triple);
+void disassemble_inst(LLVMDisasmContextRef disasm_ctx, uint8_t *bytes, int len, uint64_t pc, char *out, size_t out_len);
+void cleanup_disasm(LLVMDisasmContextRef disasm_ctx);
+
+static LLVMDisasmContextRef disasm_ctx;
+
+void init_llvm_disassembler() {
+    disasm_ctx = init_disasm("riscv64-unknown-elf");
+}
+
+void cleanup_llvm_disassembler() {
+    cleanup_disasm(disasm_ctx);
+}
 
 static void cmd_help() {
     printf("Available commands:\n");
@@ -19,21 +34,23 @@ static void cmd_continue() {
 }
 
 static void cmd_quit() {
+    cleanup_llvm_disassembler();
     exit(0);
 }
 
 static void cmd_step(int steps) {
+    char asm_buf[128];
     for (int i = 0; i < steps; ++i) {
         uint64_t current_pc = cpu.pc;
         uint32_t inst_code = mem_read(current_pc, 4);
 
-        // Prepare for disassembly
-        Decode s;
-        s.pc = current_pc;
-        s.inst = inst_code;
-        
-        char asm_buf[128]; // Buffer to hold the disassembled instruction
-        disassemble(&s, asm_buf);
+        uint8_t bytes[4];
+        bytes[0] = inst_code & 0xFF;
+        bytes[1] = (inst_code >> 8) & 0xFF;
+        bytes[2] = (inst_code >> 16) & 0xFF;
+        bytes[3] = (inst_code >> 24) & 0xFF;
+
+        disassemble_inst(disasm_ctx, bytes, 4, current_pc, asm_buf, sizeof(asm_buf));
 
         // Print the address and the disassembled instruction
         printf("\33[1;34m=> 0x%016lx\33[1;0m: \t%s\n", current_pc, asm_buf);
@@ -72,6 +89,7 @@ static void cmd_examine(int len, uint64_t addr) {
 }
 
 void debug_loop() {
+    init_llvm_disassembler();
     char line[256];
     while (1) {
         printf("(simdb) ");
