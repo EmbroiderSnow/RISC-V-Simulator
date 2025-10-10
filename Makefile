@@ -25,6 +25,14 @@ itrace:
 	@echo "-------Start Debugging-------"
 	@$(SIM) $(T) --itrace
 
+ftrace: 
+	@echo "-------Build Simulator-------"
+	@$(MAKE) -C sim
+	@echo "-------Build Test-------"
+	@$(MAKE) -C test T=$(T)
+	@echo "-------Start Debugging-------"
+	@$(SIM) $(T) --ftrace
+
 unit_test:
 	@echo "------- Building and Running Simulator Unit Tests -------"
 	@$(MAKE) -C sim unit_test

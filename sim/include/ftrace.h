@@ -20,7 +20,7 @@ void add_func_symbol(SymbolTable *table, uint64_t addr, const char *name);
 
 void sort_symbols_by_address(SymbolTable *table);
 
-const char* find_func_name(SymbolTable *table, uint64_t addr);
+const FuncSymbol* find_func(SymbolTable *table, uint64_t addr);
 
 void free_symbol_table(SymbolTable *table);
 

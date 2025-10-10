@@ -2,9 +2,14 @@
 #include <decode.h>
 #include <memory.h>
 #include <disasm.h>
+#include "ftrace.h"
 
 extern int itrace_enabled;
+extern int ftrace_enabled;
+extern SymbolTable *sym_table;
 extern LLVMDisasmContextRef disasm_ctx;
+
+int indentaton_level = 0;
 CPU_state cpu = {};
 static int running = 1;
 
@@ -14,7 +19,29 @@ void init_cpu(){
     memset(cpu.csr, 0, sizeof(cpu.csr));
 }
 
- 
+static int is_call(uint32_t inst) {
+    uint32_t opcode = inst & 0x7f;
+    uint32_t rd = (inst >> 7) & 0x1f;
+    if (opcode == 0x6f && rd == 1) { // JAL && rd == x1 (ra)
+        return 1;
+    }
+    if (opcode == 0x67 && rd == 1) { // JALR && rd == x1 (ra)
+        return 1;
+    }
+    return 0;
+}
+
+static int is_ret(uint32_t inst) {
+    uint32_t opcode = inst & 0x7f;
+    uint32_t rs1 = (inst >> 15) & 0x1f;
+    uint32_t rd = (inst >> 7) & 0x1f;
+    uint32_t imm = (inst >> 20) & 0xfff; 
+    if (opcode == 0x67 && rs1 == 1 && rd == 0 && imm == 0) { // JALR x0, 0(x1)
+        return 1;
+    }
+    return 0;
+}
+
 void exec_once(){
     Decode s;
     s.pc   = cpu.pc;
@@ -29,6 +56,29 @@ void exec_once(){
         bytes[3] = (s.inst >> 24) & 0xFF;
         disassemble_inst(disasm_ctx, bytes, 4, s.pc, asm_buf, sizeof(asm_buf));
         printf("\33[1;34m0x%016lx\33[1;0m: %08x          %s\n", s.pc, s.inst, asm_buf);
+    }
+    if (ftrace_enabled) {
+        if (is_call(s.inst)) {
+            const FuncSymbol *func_symbol = find_func(sym_table, s.pc);
+            const char *func_name = func_symbol ? func_symbol->name : "unknown_function";
+            const uint64_t func_addr = func_symbol ? func_symbol->address : 0;
+            printf("\33[1;34m0x%08lx\33[1;0m: ", s.pc);
+            for (int i = 0; i < indentaton_level; i++) {
+                printf("  ");
+            }
+            printf("call [%s@%08lx]\n", func_name, func_addr);
+            indentaton_level++;
+        } else if (is_ret(s.inst)) {
+            indentaton_level--;
+            if (indentaton_level < 0) indentaton_level = 0;
+            const FuncSymbol *func_symbol = find_func(sym_table, s.pc);
+            const char *func_name = func_symbol ? func_symbol->name : "unknown_function";
+            printf("\33[1;34m0x%08lx\33[1;0m: ", s.pc);
+            for (int i = 0; i < indentaton_level; i++) {
+                printf("  ");
+            }
+            printf("ret  [%s]\n", func_name);
+        }
     }
     decode_exec(&s);
     cpu.pc = s.dnpc;

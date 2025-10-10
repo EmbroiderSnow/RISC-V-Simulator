@@ -6,8 +6,9 @@
 
 uint8_t *mem = NULL;
 int itrace_enabled = 0;
-LLVMDisasmContextRef disasm_ctx;
+int ftrace_enabled = 0;
 SymbolTable *sym_table = NULL;
+LLVMDisasmContextRef disasm_ctx;
 
 const char *help_string = "Usage: Simulator <img_file> [-d|-b]\n"
                                   "Options:\n"
@@ -38,6 +39,10 @@ int main(int argc, char *argv[]){
     else if (argc > 2 && strcmp(argv[2], "--itrace") == 0) {
         itrace_enabled = 1;
         init_llvm_disassembler();
+        cpu_exec();
+    }
+    else if (argc > 2 && strcmp(argv[2], "--ftrace") == 0) {
+        ftrace_enabled = 1;
         cpu_exec();
     }
     else {

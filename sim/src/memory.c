@@ -1,6 +1,7 @@
 #include <common.h>
 #include <gelf.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include "ftrace.h"
 
 extern uint8_t* mem;

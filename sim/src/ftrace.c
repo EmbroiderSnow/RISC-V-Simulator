@@ -48,8 +48,8 @@ void sort_symbols_by_address(SymbolTable *table) {
     qsort(table->symbols, table->count, sizeof(FuncSymbol), compare_symbols);
 }
 
-const char* find_func_name(SymbolTable *table, uint64_t addr) {
-    if (!table || table->count == 0) return "unknown_function";
+const FuncSymbol* find_func(SymbolTable *table, uint64_t addr) {
+    if (!table || table->count == 0) return NULL;
 
     int low = 0, high = table->count - 1;
     int best_match_idx = -1;
@@ -65,10 +65,10 @@ const char* find_func_name(SymbolTable *table, uint64_t addr) {
     }
     
     if (best_match_idx != -1) {
-        return table->symbols[best_match_idx].name;
+        return &(table->symbols[best_match_idx]);
     }
 
-    return "unknown_function";
+    return NULL;
 }
 
 
