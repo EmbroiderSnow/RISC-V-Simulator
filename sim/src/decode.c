@@ -158,3 +158,110 @@ void decode_exec(Decode *s){
 
     return;
 }
+
+const char* riscv_abi_names[32] = {
+    "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
+    "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5",
+    "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7",
+    "s8", "s9", "s10","s11","t3","t4","t5","t6"
+};
+
+void disassemble(Decode *s, char *asm_buf) {
+    int rd = 0;
+    uint64_t src1 = 0, src2 = 0, imm = 0;
+    // Extract rs1 and rs2 register indices from the instruction word
+    int rs1_idx = (s->inst >> 15) & 0x1F;
+    int rs2_idx = (s->inst >> 20) & 0x1F;
+
+#define INSTPAT_INST(s) ((s)->inst)
+#define INSTPAT_MATCH(s, name, type, ... /* sprintf body */ ) { \
+    decode_operand(s, &rd, &src1, &src2, &imm, concat(TYPE_, type)); \
+    __VA_ARGS__ ; \
+}
+
+    INSTPAT_START();
+    // RV64I
+    INSTPAT("??????? ????? ????? ??? ????? 01101 11", lui, U, sprintf(asm_buf, "lui %s, 0x%lx", riscv_abi_names[rd], imm));
+    INSTPAT("??????? ????? ????? ??? ????? 00101 11", auipc, U, sprintf(asm_buf, "auipc %s, 0x%lx", riscv_abi_names[rd], imm));
+    INSTPAT("??????? ????? ????? ??? ????? 11011 11", jal, J, sprintf(asm_buf, "jal %s, 0x%lx", riscv_abi_names[rd], s->pc + imm));
+    INSTPAT("??????? ????? ????? 000 ????? 11001 11", jalr, I, sprintf(asm_buf, "jalr %s, %s, %ld", riscv_abi_names[rd], riscv_abi_names[rs1_idx], imm));
+    // BEQ, BNE, BLT, BGE, BLTU, BGEU - printing target address
+    INSTPAT("??????? ????? ????? 000 ????? 11000 11", beq, B, sprintf(asm_buf, "beq %s, %s, 0x%lx", riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx], s->pc + imm));
+    INSTPAT("??????? ????? ????? 001 ????? 11000 11", bne, B, sprintf(asm_buf, "bne %s, %s, 0x%lx", riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx], s->pc + imm));
+    INSTPAT("??????? ????? ????? 100 ????? 11000 11", blt, B, sprintf(asm_buf, "blt %s, %s, 0x%lx", riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx], s->pc + imm));
+    INSTPAT("??????? ????? ????? 101 ????? 11000 11", bge, B, sprintf(asm_buf, "bge %s, %s, 0x%lx", riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx], s->pc + imm));
+    INSTPAT("??????? ????? ????? 110 ????? 11000 11", bltu, B, sprintf(asm_buf, "bltu %s, %s, 0x%lx", riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx], s->pc + imm));
+    INSTPAT("??????? ????? ????? 111 ????? 11000 11", bgeu, B, sprintf(asm_buf, "bgeu %s, %s, 0x%lx", riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx], s->pc + imm));
+    // LB, LH, LW, LBU, LHU, LWU, LD - in format offset(base)
+    INSTPAT("??????? ????? ????? 000 ????? 00000 11", lb, I, sprintf(asm_buf, "lb %s, %ld(%s)", riscv_abi_names[rd], imm, riscv_abi_names[rs1_idx]));
+    INSTPAT("??????? ????? ????? 001 ????? 00000 11", lh, I, sprintf(asm_buf, "lh %s, %ld(%s)", riscv_abi_names[rd], imm, riscv_abi_names[rs1_idx]));
+    INSTPAT("??????? ????? ????? 010 ????? 00000 11", lw, I, sprintf(asm_buf, "lw %s, %ld(%s)", riscv_abi_names[rd], imm, riscv_abi_names[rs1_idx]));
+    INSTPAT("??????? ????? ????? 100 ????? 00000 11", lbu, I, sprintf(asm_buf, "lbu %s, %ld(%s)", riscv_abi_names[rd], imm, riscv_abi_names[rs1_idx]));
+    INSTPAT("??????? ????? ????? 101 ????? 00000 11", lhu, I, sprintf(asm_buf, "lhu %s, %ld(%s)", riscv_abi_names[rd], imm, riscv_abi_names[rs1_idx]));
+    INSTPAT("??????? ????? ????? 110 ????? 00000 11", lwu, I, sprintf(asm_buf, "lwu %s, %ld(%s)", riscv_abi_names[rd], imm, riscv_abi_names[rs1_idx]));
+    INSTPAT("??????? ????? ????? 011 ????? 00000 11", ld, I, sprintf(asm_buf, "ld %s, %ld(%s)", riscv_abi_names[rd], imm, riscv_abi_names[rs1_idx]));
+    // SB, SH, SW, SD - in format offset(base)
+    INSTPAT("??????? ????? ????? 000 ????? 01000 11", sb, S, sprintf(asm_buf, "sb %s, %ld(%s)", riscv_abi_names[rs2_idx], imm, riscv_abi_names[rs1_idx]));
+    INSTPAT("??????? ????? ????? 001 ????? 01000 11", sh, S, sprintf(asm_buf, "sh %s, %ld(%s)", riscv_abi_names[rs2_idx], imm, riscv_abi_names[rs1_idx]));
+    INSTPAT("??????? ????? ????? 010 ????? 01000 11", sw, S, sprintf(asm_buf, "sw %s, %ld(%s)", riscv_abi_names[rs2_idx], imm, riscv_abi_names[rs1_idx]));
+    INSTPAT("??????? ????? ????? 011 ????? 01000 11", sd, S, sprintf(asm_buf, "sd %s, %ld(%s)", riscv_abi_names[rs2_idx], imm, riscv_abi_names[rs1_idx]));
+    INSTPAT("??????? ????? ????? 000 ????? 00100 11", addi, I, sprintf(asm_buf, "addi %s, %s, %ld", riscv_abi_names[rd], riscv_abi_names[rs1_idx], imm));
+    // SLTI, SLTIU
+    INSTPAT("??????? ????? ????? 010 ????? 00100 11", slti, I, sprintf(asm_buf, "slti %s, %s, %ld", riscv_abi_names[rd], riscv_abi_names[rs1_idx], imm));
+    INSTPAT("??????? ????? ????? 011 ????? 00100 11", sltiu, I, sprintf(asm_buf, "sltiu %s, %s, %ld", riscv_abi_names[rd], riscv_abi_names[rs1_idx], imm));
+    // SLLI, SRLI, SRAI, SLLIW, SRLIW, SRAIW
+    INSTPAT("000000? ????? ????? 001 ????? 00100 11", slli, I, sprintf(asm_buf, "slli %s, %s, %ld", riscv_abi_names[rd], riscv_abi_names[rs1_idx], imm & 0x3f));
+    INSTPAT("000000? ????? ????? 101 ????? 00100 11", srli, I, sprintf(asm_buf, "srli %s, %s, %ld", riscv_abi_names[rd], riscv_abi_names[rs1_idx], imm & 0x3f));
+    INSTPAT("010000? ????? ????? 101 ????? 00100 11", srai, I, sprintf(asm_buf, "srai %s, %s, %ld", riscv_abi_names[rd], riscv_abi_names[rs1_idx], imm & 0x3f));
+    INSTPAT("0000000 ????? ????? 001 ????? 00110 11", slliw, I, sprintf(asm_buf, "slliw %s, %s, %ld", riscv_abi_names[rd], riscv_abi_names[rs1_idx], imm & 0x1f));
+    INSTPAT("0000000 ????? ????? 101 ????? 00110 11", srliw, I, sprintf(asm_buf, "srliw %s, %s, %ld", riscv_abi_names[rd], riscv_abi_names[rs1_idx], imm & 0x1f));
+    INSTPAT("0100000 ????? ????? 101 ????? 00110 11", sraiw, I, sprintf(asm_buf, "sraiw %s, %s, %ld", riscv_abi_names[rd], riscv_abi_names[rs1_idx], imm & 0x1f));
+    // XORI, ORI, ANDI, ADDIW
+    INSTPAT("??????? ????? ????? 100 ????? 00100 11", xori, I, sprintf(asm_buf, "xori %s, %s, %ld", riscv_abi_names[rd], riscv_abi_names[rs1_idx], imm));
+    INSTPAT("??????? ????? ????? 110 ????? 00100 11", ori, I, sprintf(asm_buf, "ori %s, %s, %ld", riscv_abi_names[rd], riscv_abi_names[rs1_idx], imm));
+    INSTPAT("??????? ????? ????? 111 ????? 00100 11", andi, I, sprintf(asm_buf, "andi %s, %s, %ld", riscv_abi_names[rd], riscv_abi_names[rs1_idx], imm));
+    INSTPAT("??????? ????? ????? 000 ????? 00110 11", addiw, I, sprintf(asm_buf, "addiw %s, %s, %ld", riscv_abi_names[rd], riscv_abi_names[rs1_idx], imm));
+    // ADD, SUB, SLL, SLT, SLTU, XOR, SRL, SRA, OR, AND
+    INSTPAT("0000000 ????? ????? 000 ????? 01100 11", add, R, sprintf(asm_buf, "add %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0100000 ????? ????? 000 ????? 01100 11", sub, R, sprintf(asm_buf, "sub %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0000000 ????? ????? 001 ????? 01100 11", sll, R, sprintf(asm_buf, "sll %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0000000 ????? ????? 010 ????? 01100 11", slt, R, sprintf(asm_buf, "slt %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0000000 ????? ????? 011 ????? 01100 11", sltu, R, sprintf(asm_buf, "sltu %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0000000 ????? ????? 100 ????? 01100 11", xor, R, sprintf(asm_buf, "xor %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0000000 ????? ????? 101 ????? 01100 11", srl, R, sprintf(asm_buf, "srl %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0100000 ????? ????? 101 ????? 01100 11", sra, R, sprintf(asm_buf, "sra %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0000000 ????? ????? 110 ????? 01100 11", or, R, sprintf(asm_buf, "or %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0000000 ????? ????? 111 ????? 01100 11", and, R, sprintf(asm_buf, "and %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    // ADDW, SUBW, SLLW, SRLW, SRAW
+    INSTPAT("0000000 ????? ????? 000 ????? 01110 11", addw, R, sprintf(asm_buf, "addw %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0100000 ????? ????? 000 ????? 01110 11", subw, R, sprintf(asm_buf, "subw %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0000000 ????? ????? 001 ????? 01110 11", sllw, R, sprintf(asm_buf, "sllw %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0000000 ????? ????? 101 ????? 01110 11", srlw, R, sprintf(asm_buf, "srlw %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0100000 ????? ????? 101 ????? 01110 11", sraw, R, sprintf(asm_buf, "sraw %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    // FENCE, FENCE.I, EBREAK, ECALL
+    INSTPAT("0000??? ????? 00000 000 00000 00011 11", fence, N, sprintf(asm_buf, "fence"));
+    INSTPAT("0000000 00000 00000 000 00000 00011 11", fencei, N, sprintf(asm_buf, "fence.i"));
+    INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak, N, sprintf(asm_buf, "ebreak"));
+    INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall, N, sprintf(asm_buf, "ecall"));
+
+    // RV64M
+    // MUL, MULH, MULHSU, MULHU, DIV, DIVU, REM, REMU
+    INSTPAT("0000001 ????? ????? 000 ????? 01100 11", mul, R, sprintf(asm_buf, "mul %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0000001 ????? ????? 001 ????? 01100 11", mulh, R, sprintf(asm_buf, "mulh %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0000001 ????? ????? 010 ????? 01100 11", mulhsu, R, sprintf(asm_buf, "mulhsu %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0000001 ????? ????? 011 ????? 01100 11", mulhu, R, sprintf(asm_buf, "mulhu %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0000001 ????? ????? 100 ????? 01100 11", div, R, sprintf(asm_buf, "div %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0000001 ????? ????? 101 ????? 01100 11", divu, R, sprintf(asm_buf, "divu %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0000001 ????? ????? 110 ????? 01100 11", rem, R, sprintf(asm_buf, "rem %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0000001 ????? ????? 111 ????? 01100 11", remu, R, sprintf(asm_buf, "remu %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    // MULW, DIVW, DIVUW, REMW, REMUW
+    INSTPAT("0000001 ????? ????? 000 ????? 01110 11", mulw, R, sprintf(asm_buf, "mulw %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0000001 ????? ????? 100 ????? 01110 11", divw, R, sprintf(asm_buf, "divw %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0000001 ????? ????? 101 ????? 01110 11", divuw, R, sprintf(asm_buf, "divuw %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0000001 ????? ????? 110 ????? 01110 11", remw, R, sprintf(asm_buf, "remw %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+    INSTPAT("0000001 ????? ????? 111 ????? 01110 11", remuw, R, sprintf(asm_buf, "remuw %s, %s, %s", riscv_abi_names[rd], riscv_abi_names[rs1_idx], riscv_abi_names[rs2_idx]));
+
+    // Invalid Opcode
+    INSTPAT("??????? ????? ????? ??? ????? ????? ??", unk, N, sprintf(asm_buf, "unknown instruction"));
+    INSTPAT_END();
+}

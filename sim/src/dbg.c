@@ -2,13 +2,7 @@
 #include <memory.h>
 #include <common.h>
 #include <dbg.h>
-
-const char* riscv_abi_names[32] = {
-    "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
-    "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5",
-    "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7",
-    "s8", "s9", "s10","s11","t3","t4","t5","t6"
-};
+#include <decode.h>
 
 static void cmd_help() {
     printf("Available commands:\n");
@@ -28,10 +22,24 @@ static void cmd_quit() {
     exit(0);
 }
 
-static void cmd_step(int stemps) {
-    for (int i = 0; i < stemps; ++i) {
-        exec_once();
-        // TODO: print pc and current instruction
+static void cmd_step(int steps) {
+    for (int i = 0; i < steps; ++i) {
+        uint64_t current_pc = cpu.pc;
+        uint32_t inst_code = mem_read(current_pc, 4);
+
+        // Prepare for disassembly
+        Decode s;
+        s.pc = current_pc;
+        s.inst = inst_code;
+        
+        char asm_buf[128]; // Buffer to hold the disassembled instruction
+        disassemble(&s, asm_buf);
+
+        // Print the address and the disassembled instruction
+        printf("\33[1;34m=> 0x%016lx\33[1;0m: \t%s\n", current_pc, asm_buf);
+
+        // Execute the instruction
+        exec_once(); 
     }
 }
 

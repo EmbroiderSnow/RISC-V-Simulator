@@ -8,6 +8,10 @@ typedef struct {
   uint32_t inst;
 } Decode;
 
+// This is a DECLARATION
+extern const char* riscv_abi_names[32];
+
 void decode_exec(Decode *s);
+void disassemble(Decode *s, char *asm_buf);
 
 #endif
