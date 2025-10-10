@@ -24,7 +24,7 @@ LD  = $(CXX)
 COMMON_FLAGS = -g -I./include -Wall $(shell llvm-config --cppflags)
 CFLAGS   = $(COMMON_FLAGS) -std=gnu11
 CXXFLAGS = $(COMMON_FLAGS) -std=c++17
-LDFLAGS  = $(LLVM_LDFLAGS)
+LDFLAGS  = $(LLVM_LDFLAGS) -lelf
 
 ## 3. Rules
 all: $(SIMULATOR)

@@ -7,7 +7,7 @@ all:
 	@echo "-------Build Test-------"
 	@$(MAKE) -C test T=$(T)
 	@echo "-------Start Simulation-------"
-	@$(SIM) $(TARGET) --batch
+	@$(SIM) $(T) --batch
 
 debug: 
 	@echo "-------Build Simulator-------"
@@ -15,7 +15,7 @@ debug:
 	@echo "-------Build Test-------"
 	@$(MAKE) -C test T=$(T)
 	@echo "-------Start Debugging-------"
-	@$(SIM) $(TARGET) --debug
+	@$(SIM) $(T) --debug
 
 itrace: 
 	@echo "-------Build Simulator-------"
@@ -23,7 +23,7 @@ itrace:
 	@echo "-------Build Test-------"
 	@$(MAKE) -C test T=$(T)
 	@echo "-------Start Debugging-------"
-	@$(SIM) $(TARGET) --itrace
+	@$(SIM) $(T) --itrace
 
 unit_test:
 	@echo "------- Building and Running Simulator Unit Tests -------"

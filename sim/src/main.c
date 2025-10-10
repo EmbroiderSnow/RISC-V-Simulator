@@ -2,10 +2,12 @@
 #include <memory.h>
 #include <cpu.h>
 #include <disasm.h>
+#include "ftrace.h"
 
 uint8_t *mem = NULL;
 int itrace_enabled = 0;
 LLVMDisasmContextRef disasm_ctx;
+SymbolTable *sym_table = NULL;
 
 const char *help_string = "Usage: Simulator <img_file> [-d|-b]\n"
                                   "Options:\n"
@@ -16,7 +18,16 @@ int main(int argc, char *argv[]){
     mem = (uint8_t *)malloc(MEM_SIZE);
     check_mem(mem);
     memset(mem, 0, MEM_SIZE);
-    load_image(argv[1]);
+    
+    char image_file[128] = "";
+    sprintf(image_file, "test/build/%s.bin", argv[1]);
+    load_image(image_file);
+
+    char elf_file[128] = "";
+    sprintf(elf_file, "test/build/%s.elf", argv[1]);
+    sym_table = malloc(sizeof(SymbolTable));
+    load_elf_symbols(elf_file);
+
     init_cpu();
     if (argc > 2 && strcmp(argv[2], "--debug") == 0) {
         debug_loop();
