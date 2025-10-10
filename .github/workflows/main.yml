@@ -38,7 +38,7 @@ jobs:
           'quicksort',
           'shift',
           'unalign',
-          'printf',
+          'print',
           'exit'
           ]
 
