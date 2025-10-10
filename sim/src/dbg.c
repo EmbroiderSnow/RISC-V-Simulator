@@ -4,7 +4,9 @@
 #include <dbg.h>
 #include <decode.h>
 #include <disasm.h>
+#include "ftrace.h"
 
+extern SymbolTable *sym_table;
 extern LLVMDisasmContextRef disasm_ctx;
 
 static void cmd_help() {
@@ -42,6 +44,14 @@ static void cmd_step(int steps) {
 
         // Print the address and the disassembled instruction
         printf("\33[1;34m=> 0x%016lx\33[1;0m: \t%s\n", current_pc, asm_buf);
+
+        // Look up and print the function name if available
+        if (sym_table) {
+            const FuncSymbol *func_symbol = find_func(sym_table, current_pc);
+            if (func_symbol) {
+                printf("\33[1;34m0x%08lx\33[1;0m in \33[1;33m%s\33[1;0m ()\n", func_symbol->address, func_symbol->name);
+            }
+        }
 
         // Execute the instruction
         exec_once(); 

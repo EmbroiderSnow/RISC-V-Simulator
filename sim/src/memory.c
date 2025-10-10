@@ -100,8 +100,6 @@ void load_elf_symbols(const char *file_path) {
         exit(1);
     }
 
-    printf("Entry point: 0x%lx\n", ehdr.e_entry);
-
     Elf_Scn *scn = NULL;
     GElf_Shdr shdr;
     while ((scn = elf_nextscn(elf, scn)) != NULL) {

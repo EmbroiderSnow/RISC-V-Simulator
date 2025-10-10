@@ -31,6 +31,7 @@ int main(int argc, char *argv[]){
 
     init_cpu();
     if (argc > 2 && strcmp(argv[2], "--debug") == 0) {
+        init_llvm_disassembler();
         debug_loop();
     }
     else if (argc > 2 && strcmp(argv[2], "--batch") == 0) {
