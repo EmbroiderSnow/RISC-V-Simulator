@@ -37,7 +37,9 @@ jobs:
           'matrix-mul',
           'quicksort',
           'shift',
-          'unalign'
+          'unalign',
+          'printf',
+          'exit'
           ]
 
     steps:
