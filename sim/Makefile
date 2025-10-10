@@ -19,7 +19,7 @@ TEST_RUNNER = $(BUILD)/TestRunner
 CC  = gcc
 CXX = g++
 LD  = $(CC)
-CFLAGS   = -I./include -Wall
+CFLAGS   = -g -I./include -Wall
 CXXFLAGS = $(CFLAGS)
 
 ## 3. Rules

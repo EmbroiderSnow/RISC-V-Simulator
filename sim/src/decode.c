@@ -4,7 +4,7 @@
 #include <cpu.h>
 #include <memory.h>
 #include <decode.h>
-#include <trap.h>
+#include "syscall.h"
 
 extern CPU_state cpu;
 

@@ -1,7 +1,8 @@
 #include <cpu.h>
-#include <include/syscall.h>
+#include "syscall.h"
 #include <decode.h>
 #include <stdio.h>
+#include <memory.h>
 
 extern CPU_state cpu;
 
@@ -20,7 +21,9 @@ void handle_syscall(Decode *s) {
                 uint64_t count = cpu.reg[12]; // a2
                 if (fd == 1) { // stdout
                     for (uint64_t i = 0; i < count; i++) {
-                        putchar(*(uint8_t *)(buf + i));
+                        // printf("Syscall: write byte %02x from addr %016lx\n", mem_read(buf + i, 1), buf + i);
+                        uint8_t byte_to_write = mem_read(buf + i, 1);
+                        putchar(byte_to_write);
                     }
                     cpu.reg[10] = count; // return value in a0
                 } else {

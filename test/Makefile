@@ -3,6 +3,9 @@ BUILD  = build
 TARGET = $(BUILD)/$(T).bin
 $(shell mkdir -p $(BUILD)/objs)
 
+LIB_SRCS = $(wildcard lib/*.c)
+LIB_OBJS = $(patsubst lib/%.c, $(BUILD)/objs/%.o, $(LIB_SRCS))
+
 ## 2. General Compilation Flags
 ### Cross compiler
 CROSS_COMPILE = riscv64-unknown-elf-
@@ -36,11 +39,16 @@ $(BUILD)/objs/trm.o: trm/trm.c
 	@echo + CC "->" $<
 	@$(CC) -std=gnu11 $(CFLAGS) -c -o $@ $<
 
+$(BUILD)/objs/%.o: lib/%.c
+	@echo + CC "->" $<
+	@$(CC) -std=gnu11 $(CFLAGS) -c -o $@ $<
+
 $(BUILD)/objs/%.o: src/%.c
 	@echo + CC "->" $<
 	@$(CC) -std=gnu11 $(CFLAGS) -c -o $@ $<
 
-$(BUILD)/%.elf: $(addprefix $(BUILD)/objs/, %.o trm.o start.o)
+# $(BUILD)/%.elf: $(addprefix $(BUILD)/objs/, %.o trm.o start.o)
+$(BUILD)/%.elf: $(addprefix $(BUILD)/objs/, %.o) $(LIB_OBJS) $(BUILD)/objs/trm.o $(BUILD)/objs/start.o
 	@echo + LD "->" $^
 	@$(LD) $(LDFLAGS) $^ -o $@
 
