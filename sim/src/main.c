@@ -1,8 +1,11 @@
 #include <common.h>
 #include <memory.h>
 #include <cpu.h>
+#include <disasm.h>
 
 uint8_t *mem = NULL;
+int itrace_enabled = 0;
+LLVMDisasmContextRef disasm_ctx;
 
 const char *help_string = "Usage: Simulator <img_file> [-d|-b]\n"
                                   "Options:\n"
@@ -15,10 +18,15 @@ int main(int argc, char *argv[]){
     memset(mem, 0, MEM_SIZE);
     load_image(argv[1]);
     init_cpu();
-    if (argc > 2 && strcmp(argv[2], "-d") == 0) {
+    if (argc > 2 && strcmp(argv[2], "--debug") == 0) {
         debug_loop();
     }
-    else if (argc > 2 && strcmp(argv[2], "-b") == 0) {
+    else if (argc > 2 && strcmp(argv[2], "--batch") == 0) {
+        cpu_exec();
+    }
+    else if (argc > 2 && strcmp(argv[2], "--itrace") == 0) {
+        itrace_enabled = 1;
+        init_llvm_disassembler();
         cpu_exec();
     }
     else {

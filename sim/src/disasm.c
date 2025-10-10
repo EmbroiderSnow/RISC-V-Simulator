@@ -4,6 +4,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+extern LLVMDisasmContextRef disasm_ctx;
+
 LLVMDisasmContextRef init_disasm(const char *triple) {
     LLVMInitializeAllTargetInfos();
     LLVMInitializeAllTargetMCs();
@@ -40,4 +42,12 @@ void cleanup_disasm(LLVMDisasmContextRef disasm_ctx) {
     if (disasm_ctx) {
         LLVMDisasmDispose(disasm_ctx);
     }
+}
+
+void init_llvm_disassembler() {
+    disasm_ctx = init_disasm("riscv64-unknown-elf");
+}
+
+void cleanup_llvm_disassembler() {
+    cleanup_disasm(disasm_ctx);
 }

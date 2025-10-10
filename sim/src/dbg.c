@@ -3,21 +3,9 @@
 #include <common.h>
 #include <dbg.h>
 #include <decode.h>
-#include <llvm-c/Disassembler.h>
+#include <disasm.h>
 
-LLVMDisasmContextRef init_disasm(const char *triple);
-void disassemble_inst(LLVMDisasmContextRef disasm_ctx, uint8_t *bytes, int len, uint64_t pc, char *out, size_t out_len);
-void cleanup_disasm(LLVMDisasmContextRef disasm_ctx);
-
-static LLVMDisasmContextRef disasm_ctx;
-
-void init_llvm_disassembler() {
-    disasm_ctx = init_disasm("riscv64-unknown-elf");
-}
-
-void cleanup_llvm_disassembler() {
-    cleanup_disasm(disasm_ctx);
-}
+extern LLVMDisasmContextRef disasm_ctx;
 
 static void cmd_help() {
     printf("Available commands:\n");
