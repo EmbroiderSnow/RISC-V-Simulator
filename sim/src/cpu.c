@@ -83,7 +83,6 @@ void exec_once(){
     if (ftrace_enabled) {
         if (is_call(s.inst)) {
             uint64_t target_addr = get_call_target_addr(&s);
-            printf("Call target address: 0x%lx\n", target_addr);
             const FuncSymbol *func_symbol = find_func(sym_table, target_addr);
             const char *func_name = func_symbol ? func_symbol->name : "unknown_function";
             const uint64_t func_addr = func_symbol ? func_symbol->address : 0;
