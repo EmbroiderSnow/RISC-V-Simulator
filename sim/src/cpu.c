@@ -2,6 +2,7 @@
 #include <decode.h>
 #include <memory.h>
 #include <disasm.h>
+#include <macro.h>
 #include "ftrace.h"
 
 extern int itrace_enabled;
@@ -28,6 +29,28 @@ static int is_call(uint32_t inst) {
     if (opcode == 0x67 && rd == 1) { // JALR && rd == x1 (ra)
         return 1;
     }
+    return 0;
+}
+
+uint64_t get_call_target_addr(Decode *s) {
+    uint32_t inst = s->inst;
+    uint32_t opcode = inst & 0x7f;
+
+    // J-type (jal)
+    if (opcode == 0b1101111) {
+        int32_t imm_j = SEXT(BITS(inst, 31, 31) << 20 | \
+                                BITS(inst, 19, 12) << 12 | \
+                                BITS(inst, 20, 20) << 11 | \
+                                BITS(inst, 30, 21) << 1, 21);
+        return s->pc + imm_j;
+    }
+    // I-type (jalr)
+    else if (opcode == 0b1100111) {
+        int rs1_idx = (inst >> 15) & 0x1f;
+        int32_t imm_i = (int32_t)inst >> 20;
+        return cpu.reg[rs1_idx] + imm_i;
+    }
+
     return 0;
 }
 
@@ -59,7 +82,9 @@ void exec_once(){
     }
     if (ftrace_enabled) {
         if (is_call(s.inst)) {
-            const FuncSymbol *func_symbol = find_func(sym_table, s.pc);
+            uint64_t target_addr = get_call_target_addr(&s);
+            printf("Call target address: 0x%lx\n", target_addr);
+            const FuncSymbol *func_symbol = find_func(sym_table, target_addr);
             const char *func_name = func_symbol ? func_symbol->name : "unknown_function";
             const uint64_t func_addr = func_symbol ? func_symbol->address : 0;
             printf("\33[1;34m0x%08lx\33[1;0m: ", s.pc);

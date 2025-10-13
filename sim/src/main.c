@@ -28,6 +28,7 @@ int main(int argc, char *argv[]){
     sprintf(elf_file, "test/build/%s.elf", argv[1]);
     sym_table = malloc(sizeof(SymbolTable));
     load_elf_symbols(elf_file);
+    sort_symbols_by_address(sym_table);
 
     init_cpu();
     if (argc > 2 && strcmp(argv[2], "--debug") == 0) {
