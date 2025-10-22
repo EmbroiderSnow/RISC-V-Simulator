@@ -1,5 +1,5 @@
 #include <common.h>
-#include <decode.h>
+#include <iss_core.h>
 #include <memory.h>
 #include <disasm.h>
 #include <macro.h>

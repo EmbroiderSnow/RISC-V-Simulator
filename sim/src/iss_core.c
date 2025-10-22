@@ -3,49 +3,11 @@
 #include <pattern.h>
 #include <cpu.h>
 #include <memory.h>
-#include <decode.h>
+#include <isa_decode.h>
+#include <iss_core.h>
 #include "syscall.h"
 
 extern CPU_state cpu;
-
-#define R(i) (cpu.reg[i])
-#define Mr mem_read
-#define Mw mem_write
-#define HALT(thispc, code) halt_trap(thispc, code)
-#define NOP do {} while(0)
-
-enum {
-    TYPE_R, TYPE_I, TYPE_S, TYPE_B, TYPE_U, TYPE_J, TYPE_N
-};
-
-#define src1R() do { *src1 = R(rs1); } while (0)
-#define src2R() do { *src2 = R(rs2); } while (0)
-#define immI() do { *imm = SEXT(BITS(i, 31, 20), 12); } while(0)
-#define immU() do { *imm = SEXT(BITS(i, 31, 12), 20) << 12; } while(0)
-#define immJ() do { *imm = SEXT(BITS(i, 31, 31) << 20 | \
-                                BITS(i, 19, 12) << 12 | \
-                                BITS(i, 20, 20) << 11 | \
-                                BITS(i, 30, 21) << 1, 21);} while(0)
-#define immS() do { *imm = (SEXT(BITS(i, 31, 25), 7) << 5) | BITS(i, 11, 7); } while(0)
-#define immB() do { *imm = SEXT(BITS(i, 31, 31) << 12 | \
-                                BITS(i, 7, 7) << 11 | \
-                                BITS(i, 30, 25) << 5 | \
-                                BITS(i, 11, 8) << 1, 13);} while(0)
-
-static void decode_operand(Decode *s, int *rd, uint64_t *src1, uint64_t *src2, uint64_t *imm, int type){
-    uint32_t i = s->inst;
-    int rs1 = BITS(i, 19, 15);
-    int rs2 = BITS(i, 24, 20);
-    *rd     = BITS(i, 11,  7);
-    switch(type) {
-        case TYPE_R: src1R(); src2R();         break;
-        case TYPE_I: src1R();          immI(); break;
-        case TYPE_S: src1R(); src2R(); immS(); break;
-        case TYPE_B: src1R(); src2R(); immB(); break;
-        case TYPE_U:                   immU(); break;
-        case TYPE_J:                   immJ(); break;
-    }
-}
 
 static void ecall_handler(Decode *s) {
     cpu.csr[CSR_MEPC] = s->snpc;
@@ -158,10 +120,3 @@ void decode_exec(Decode *s){
 
     return;
 }
-
-const char* riscv_abi_names[32] = {
-    "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
-    "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5",
-    "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7",
-    "s8", "s9", "s10","s11","t3","t4","t5","t6"
-};
