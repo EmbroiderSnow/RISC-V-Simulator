@@ -19,7 +19,7 @@ void init_cpu(){
     memset(cpu.csr, 0, sizeof(cpu.csr));
 }
 
-void exec_once(){
+void iss_exec_once() {
     Decode s;
     s.pc   = cpu.pc;
     s.inst = inst_fetch(s.pc);
@@ -34,15 +34,9 @@ void exec_once(){
     cpu.pc = s.dnpc;
 }
 
-void exec_single_inst(uint32_t inst) {
-    Decode s;
-    s.inst = inst;
-    decode_exec(&s);
-}
-
-void cpu_exec(){
-    while(running){
-        exec_once();
+void iss_cpu_exec() {
+    while (running) {
+        iss_exec_once();
     }
 }
 

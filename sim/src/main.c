@@ -66,16 +66,16 @@ int run_iss_model(int argc, char *argv[]) {
         debug_loop();
     }
     else if (argc > 2 && strcmp(argv[2], "--batch") == 0) {
-        cpu_exec();
+        iss_cpu_exec();
     }
     else if (argc > 2 && strcmp(argv[2], "--itrace") == 0) {
         itrace_enabled = 1;
         init_llvm_disassembler();
-        cpu_exec();
+        iss_cpu_exec();
     }
     else if (argc > 2 && strcmp(argv[2], "--ftrace") == 0) {
         ftrace_enabled = 1;
-        cpu_exec();
+        iss_cpu_exec();
     }
     else {
         printf("%s", help_string);

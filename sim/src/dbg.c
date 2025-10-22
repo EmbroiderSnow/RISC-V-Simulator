@@ -2,7 +2,7 @@
 #include <memory.h>
 #include <common.h>
 #include <dbg.h>
-#include <decode.h>
+#include <isa_decode.h>
 #include <disasm.h>
 #include "ftrace.h"
 
@@ -27,7 +27,7 @@ static void cmd_help() {
 }
 
 static void cmd_continue() {
-    cpu_exec();
+    iss_cpu_exec();
 }
 
 static void cmd_quit() {
@@ -61,7 +61,7 @@ static void cmd_step(int steps) {
         }
 
         // Execute the instruction
-        exec_once(); 
+        iss_exec_once(); 
     }
 }
 
