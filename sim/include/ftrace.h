@@ -2,6 +2,7 @@
 #define __FTRACE_H__
 
 #include <stdint.h>
+#include <isa_decode.h>
 
 typedef struct {
     uint64_t address; 
@@ -23,5 +24,7 @@ void sort_symbols_by_address(SymbolTable *table);
 const FuncSymbol* find_func(SymbolTable *table, uint64_t addr);
 
 void free_symbol_table(SymbolTable *table);
+
+void handle_ftrace(Decode *s);
 
 #endif
