@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <disasm.h>
 
 extern LLVMDisasmContextRef disasm_ctx;
 
@@ -50,4 +51,15 @@ void init_llvm_disassembler() {
 
 void cleanup_llvm_disassembler() {
     cleanup_disasm(disasm_ctx);
+}
+
+void handle_itrace(Decode *s) {
+    char asm_buf[128];
+    uint8_t bytes[4];
+    bytes[0] = s->inst & 0xFF;
+    bytes[1] = (s->inst >> 8) & 0xFF;
+    bytes[2] = (s->inst >> 16) & 0xFF;
+    bytes[3] = (s->inst >> 24) & 0xFF;
+    disassemble_inst(disasm_ctx, bytes, 4, s->pc, asm_buf, sizeof(asm_buf));
+    printf("\33[1;34m0x%016lx\33[1;0m: %08x          %s\n", s->pc, s->inst, asm_buf);
 }
