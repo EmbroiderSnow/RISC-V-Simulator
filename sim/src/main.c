@@ -97,8 +97,14 @@ int run_mc_model(int argc, char *argv[]) {
     char image_file[128] = "";
     sprintf(image_file, "test/build/%s.bin", argv[1]);
     load_image(image_file);
+ 
+    if (argc > 2 && strcmp(argv[2], "--itrace") == 0) {
+        itrace_enabled = 1;
+        init_llvm_disassembler();
+    }
 
-    // TODO: multi_cycle_cpu_exec()
+    init_cpu();
+    mc_cpu_exec();
 
     free(mem);
     return 0;

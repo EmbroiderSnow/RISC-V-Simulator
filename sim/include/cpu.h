@@ -18,14 +18,17 @@ void init_cpu();
 void halt_trap(uint64_t pc, uint64_t code);
 
 // ------------ ISS SIM ------------
+
 void iss_cpu_exec();
 void iss_exec_once();
 
 // --------- Multi-cycle SIM ---------
+
 void mc_cpu_exec();
 void mc_exec_once();
 
 // ---------- Pipeline SIM -----------
+
 void pl_cpu_exec();
 void pl_exec_once();
 

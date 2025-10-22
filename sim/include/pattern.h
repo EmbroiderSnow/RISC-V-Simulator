@@ -1,6 +1,8 @@
 #ifndef PATTERN_H
 #define PATTERN_H
 
+#include <dbg.h>
+
 // --- pattern matching mechanism ---
 __attribute__((always_inline))
 static inline void pattern_decode(const char *str, int len,

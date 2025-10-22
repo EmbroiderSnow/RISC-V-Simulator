@@ -1,7 +1,11 @@
 #ifndef ISA_DECODE_H
 #define ISA_DECODE_H
 
-#include<stdint.h>
+#include <stdint.h>
+#include <pattern.h>
+#include <macro.h>
+#include <dbg.h>
+#include <memory.h>
 
 typedef enum {
     TYPE_R, TYPE_I, TYPE_S, TYPE_B, TYPE_U, TYPE_J, TYPE_N
@@ -37,5 +41,11 @@ void decode_operand(Decode *s, int *rd, uint64_t *src1, uint64_t *src2, uint64_t
                                 BITS(i, 7, 7) << 11 | \
                                 BITS(i, 30, 25) << 5 | \
                                 BITS(i, 11, 8) << 1, 13);} while(0)
+
+#define INSTPAT_INST(s) ((s)->inst)
+#define INSTPAT_MATCH(s, name, type, ... /* execute body */ ) { \
+  decode_operand(s, &rd, &src1, &src2, &imm, concat(TYPE_, type)); \
+  __VA_ARGS__ ; \
+}
 
 #endif

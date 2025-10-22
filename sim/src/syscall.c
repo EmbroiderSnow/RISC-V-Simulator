@@ -1,7 +1,7 @@
 #include <cpu.h>
 #include "syscall.h"
-#include <decode.h>
 #include <stdio.h>
+#include <isa_decode.h>
 #include <memory.h>
 
 extern CPU_state cpu;
