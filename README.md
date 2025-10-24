@@ -56,7 +56,7 @@ If you prefer to build locally, you will need to install the RISC-V GNU toolchai
 2. **Build the project and run all test:**
 
    ```bash
-   docker-compose exec dev make test_all
+   docker-compose exec dev make test-all MODEL=[iss|mc|pl]
    ```
 
 ### Build and Run (Local)
@@ -68,50 +68,139 @@ If you prefer to build locally, you will need to install the RISC-V GNU toolchai
     Run the `make` command in the project root directory.
 
     ```bash
-    make test_all
+    make test-all 
     ```
 
-## 🎮 Usage
+## 🧩 Simulator Usage Guide
 
-### Running Test Programs
+This document explains how to build and run the RISC-V simulator and test programs using the provided **Makefile**.
+It describes all available commands, parameters, and typical usage examples.
 
-You can run any test program located in the project's root directory. All test programs are compiled into the `test/build` directory.
+---
 
-For example, to run the `quicksort` test:
-```bash
-docker-compose exec dev make T=quicksort
-```
+### ⚙️ Build Commands
 
-### Debug Mode
+| Command           | Description                                                    |
+| ----------------- | -------------------------------------------------------------- |
+| `make build`      | Build both the simulator (`sim`) and the test program (`test`) |
+| `make build-sim`  | Build the simulator only                                       |
+| `make build-test` | Build the test program only                                    |
 
-Start the simulator in debug mode by the make command below:
-```bash
-docker-compose exec dev make debug T=XXX
-```
+---
 
-In debug mode, you can use the following commands:
+### 🚀 Running the Simulator
 
-- `help`: Print the help message of debug commands
-
-* `si [N]`: Execute a single instruction if `arg N` not provided, or execute N instructions.
-* `c`: Continue execution until the program finishes.
-* `info r`: Print the status of all general-purpose registers (include PC).
-* `x <N> <EXPR>`: Scan `N` 4-byte words of memory starting at address `EXPR`.
-
-### Other Commands
-
-To run the Simulator in `itrace`/`ftrace` mode:
-
-```sh
-docker-compose exec dev make itrace T=XXX
-docker-compose exec dev make ftrace T=XXX
-```
-
-## ✅ Testing
-
-If you want to add your own test cases, place your test source file (`.c` file) in the **`/test/src`** directory.
- For example, if your test is named **`sample`**, you can run it with the following command:
+#### Basic Command Format
 
 ```bash
-docker-compose exec dev make T=sample
+make run T=<test_name> MODEL=<model_name> [ARGS="optional arguments"]
 ```
+
+#### Parameters
+
+| Parameter | Description                                        | Example                               |
+| --------- | -------------------------------------------------- | ------------------------------------- |
+| `T`       | The test program name (without `.bin` extension)   | `T=dummy`                             |
+| `MODEL`   | The simulator model to run                         | `MODEL=iss` or `MODEL=mc` or `MODEL=pl`        |
+| `ARGS`    | Optional runtime arguments passed to the simulator | `ARGS="--itrace"` or `ARGS="--debug"` |
+
+#### Execution Process
+
+When you run `make run`, the following happens automatically:
+
+1. The simulator and test program are built (via `build-sim` and `build-test`).
+2. The command below is executed:
+
+   ```
+   sim/build/Simulator <MODEL> <T> <ARGS>
+   ```
+
+   * `<MODEL>` specifies which simulator model to run.
+   * `<T>` is the test program name.
+   * `<ARGS>` are additional runtime options.
+
+---
+
+### 🧠 Predefined Shortcuts
+
+To simplify common use cases, the Makefile defines several shortcut targets:
+
+| Command               | Equivalent to                                | Description                                           |
+| --------------------- | -------------------------------------------- | ----------------------------------------------------- |
+| `make iss T=dummy`    | `make run MODEL=iss T=dummy ARGS="--batch"`  | Run the ISS (instruction set simulator) in batch mode |
+| `make mc T=dummy`     | `make run MODEL=mc T=dummy ARGS=""`          | Run the multi-cycle CPU model                         |
+| `make debug T=dummy`  | `make run MODEL=iss T=dummy ARGS="--debug"`  | Run the ISS in debug mode                             |
+| `make itrace T=dummy` | `make run MODEL=iss T=dummy ARGS="--itrace"` | Enable instruction tracing                            |
+| `make ftrace T=dummy` | `make run MODEL=iss T=dummy ARGS="--ftrace"` | Enable function call tracing                          |
+
+---
+
+### 🧪 Examples
+
+#### Example 1 — Run the Multi-Cycle Model
+
+```bash
+make run T=dummy MODEL=mc
+```
+
+➡️ Builds and runs `test/build/dummy.bin` using the multi-cycle CPU model.
+
+---
+
+#### Example 2 — Run the ISS Model
+
+```bash
+make run T=dummy MODEL=iss
+```
+
+➡️ Builds and runs the instruction set simulator.
+
+---
+
+#### Example 3 — Enable Instruction Tracing
+
+```bash
+make run T=dummy MODEL=iss ARGS="--itrace"
+```
+
+or simply:
+
+```bash
+make itrace T=dummy
+```
+
+➡️ Runs the simulator with instruction-level trace output.
+
+---
+
+#### Example 4 — Debug Mode
+
+```bash
+make debug T=dummy
+```
+
+➡️ Runs the ISS with detailed debug output enabled.
+
+---
+
+#### Example 5 — Clean the Build
+
+```bash
+make clean
+```
+
+➡️ Removes all generated files under `sim/build/` and `test/build/`.
+
+---
+
+### 📘 Summary
+
+| Use Case          | Recommended Command          |
+| ----------------- | ---------------------------- |
+| First run         | `make run T=dummy MODEL=iss` |
+| Multi-cycle model | `make run T=dummy MODEL=mc`  |
+| Batch mode        | `make iss T=dummy`           |
+| Instruction trace | `make itrace T=dummy`        |
+| Debug mode        | `make debug T=dummy`         |
+| Clean build files | `make clean`                 |
+

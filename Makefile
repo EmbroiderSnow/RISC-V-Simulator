@@ -48,6 +48,20 @@ itrace:
 ftrace: 
 	@$(MAKE) run MODEL=iss T=$(T) ARGS="--ftrace"
 
+TESTS := ackermann add div dummy if-else load-store matrix-mul quicksort shift unalign
+
+.PHONY: test-all $(TESTS:%=run-%)
+
+test-all: $(TESTS:%=run-%)
+
+$(TESTS:%=run-%): run-%:
+	@echo ""
+	@echo "=============================="
+	@echo " Running test: $*"
+	@echo " MODEL: $(MODEL)"
+	@echo "=============================="
+	@$(MAKE) run T=$* MODEL=$(MODEL) ARGS="$(ARGS)"
+
 .PHONY: clean 
 
 clean:
