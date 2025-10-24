@@ -22,3 +22,49 @@ void decode_operand(Decode *s, int *rd, uint64_t *src1, uint64_t *src2, uint64_t
         case TYPE_N:                           break;
     }
 }
+
+int is_load(uint64_t inst) {
+    uint32_t opcode = inst & 0x7F;
+    return opcode == 0b0000011;
+}
+
+DecodeType get_inst_type(uint64_t inst) {
+    uint32_t opcode = inst & 0x7F;
+
+    switch (opcode) {
+        // R-Type
+        case 0b0110011: // OP (add, sub, sll, slt, sltu, xor, srl, sra, or, and)
+        case 0b0111011: // OP-32 (addw, subw, sllw, srlw, sraw)
+            return TYPE_R;
+
+        // I-Type
+        case 0b0000011: // LOAD (lb, lh, lw, lbu, lhu, lwu, ld)
+        case 0b0010011: // OP-IMM (addi, slti, sltiu, xori, ori, andi, slli, srli, srai)
+        case 0b0011011: // OP-IMM-32 (addiw, slliw, srliw, sraiw)
+        case 0b1100111: // JALR
+        case 0b1110011: // SYSTEM (ecall, ebreak, csr*)
+        case 0b0001111: // FENCE, FENCE.I
+            return TYPE_I;
+
+        // S-Type
+        case 0b0100011: // STORE (sb, sh, sw, sd)
+            return TYPE_S;
+
+        // B-Type
+        case 0b1100011: // BRANCH (beq, bne, blt, bge, bltu, bgeu)
+            return TYPE_B;
+
+        // U-Type
+        case 0b0110111: // LUI
+        case 0b0010111: // AUIPC
+            return TYPE_U;
+
+        // J-Type
+        case 0b1101111: // JAL
+            return TYPE_J;
+
+        // Unknown
+        default:
+            return TYPE_N;
+    }
+}

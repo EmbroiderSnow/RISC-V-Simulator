@@ -1,6 +1,7 @@
 #include <common.h>
 #include <iss_core.h>
 #include <mc_core.h>
+#include <pl_core.h>
 #include <memory.h>
 #include <disasm.h>
 #include <macro.h>
@@ -103,6 +104,31 @@ void mc_cpu_exec() {
         mc_exec_once();
     }
     show_performance();
+}
+
+// --------- Pipeline SIM ---------
+void pl_exec_once() {
+    ++global_cycle_count;
+    pl_WB();
+    pl_MEM();
+    pl_EX();
+    pl_ID();
+    pl_IF();
+}
+
+extern int RAW_harzard_count;
+extern int control_harzard_count;
+
+static inline void pl_show_performance() {
+    printf(ANSI_FMT("Performance: \n\tINST NUM  = %4ld\n\tCYCLE NUM = %4ld\n\tCPI       = %.3f\n\tRAW_harzard_count = %4d\n\tcontrol_harzard_count = %4d\n", ANSI_FG_YELLOW), ninst, global_cycle_count, (float)global_cycle_count/(float)ninst, RAW_harzard_count, control_harzard_count);
+}
+
+void pl_cpu_exec() {
+    init_pipeline();
+    while (running) {
+        pl_exec_once();
+    }
+    pl_show_performance();
 }
 
 void halt_trap(uint64_t pc, uint64_t code){

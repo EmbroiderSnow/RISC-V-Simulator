@@ -9,6 +9,23 @@ static inline void debug_mc(Decode *s) {
     printf("INST: 0x%08x\n", s->inst);
 }
 
+static int last_inst_was_div = 0;
+static int last_div_rs1 = 0; 
+static int last_div_rs2 = 0; 
+static int last_div_rdq = 0; 
+
+static inline int inst_fusion(Decode *s) {
+    uint32_t i = s->inst;
+    int rs1 = BITS(i, 19, 15);
+    int rs2 = BITS(i, 24, 20);
+    int rd  = BITS(i, 11,  7);
+    if (last_inst_was_div) {
+        if ((last_div_rdq == rd) && (last_div_rs1 == rs1) && (last_div_rs2 == rs2))
+            return 1;
+    }
+    return 0;
+}
+
 // Descripe the state machine of Multi-Cycle processor
 void push_stage(Decode *s, Multi_Cycle_Stage *stage) {
     switch (*stage) {
@@ -91,6 +108,7 @@ void mc_ID(Decode *s) {
     int rd = 0;
     uint64_t src1 = 0, src2 = 0, imm = 0;
     global_cycle_count++;
+    last_inst_was_div = 0;
 
     INSTPAT_START();
     //RV64I
@@ -164,8 +182,8 @@ void mc_ID(Decode *s) {
     INSTPAT("0000001 ????? ????? 001 ????? 01100 11", mulh   , R);
     INSTPAT("0000001 ????? ????? 010 ????? 01100 11", mulhsu , R);
     INSTPAT("0000001 ????? ????? 011 ????? 01100 11", mulhu  , R);
-    INSTPAT("0000001 ????? ????? 100 ????? 01100 11", div    , R);
-    INSTPAT("0000001 ????? ????? 101 ????? 01100 11", divu   , R);
+    INSTPAT("0000001 ????? ????? 100 ????? 01100 11", div    , R, last_inst_was_div = 1; last_div_rs1 = BITS(s->inst, 19, 15); last_div_rs2 = BITS(s->inst, 24, 20); last_div_rdq = rd;);
+    INSTPAT("0000001 ????? ????? 101 ????? 01100 11", divu   , R, last_inst_was_div = 1; last_div_rs1 = BITS(s->inst, 19, 15); last_div_rs2 = BITS(s->inst, 24, 20); last_div_rdq = rd;);
     INSTPAT("0000001 ????? ????? 110 ????? 01100 11", rem    , R);
     INSTPAT("0000001 ????? ????? 111 ????? 01100 11", remu   , R);
 
@@ -264,15 +282,15 @@ void mc_EX(Decode *s, uint64_t *alu_result) {
     INSTPAT("0000001 ????? ????? 011 ????? 01100 11", mulhu  , R, *alu_result = (uint64_t)((__uint128_t)(uint64_t)src1 * (__uint128_t)(uint64_t)src2 >> 64); global_cycle_count += 1);
     INSTPAT("0000001 ????? ????? 100 ????? 01100 11", div    , R, if (src2 == 0) *alu_result = -1; else *alu_result = (int64_t)src1 / (int64_t)src2; global_cycle_count += 39);
     INSTPAT("0000001 ????? ????? 101 ????? 01100 11", divu   , R, if (src2 == 0) *alu_result = -1; else *alu_result = src1 / src2; global_cycle_count += 39);
-    INSTPAT("0000001 ????? ????? 110 ????? 01100 11", rem    , R, if (src2 == 0) *alu_result = src1; else *alu_result = (int64_t)src1 % (int64_t)src2; global_cycle_count += 39);
-    INSTPAT("0000001 ????? ????? 111 ????? 01100 11", remu   , R, if (src2 == 0) *alu_result = src1; else *alu_result = src1 % src2; global_cycle_count += 39);
+    INSTPAT("0000001 ????? ????? 110 ????? 01100 11", rem    , R, if (src2 == 0) *alu_result = src1; else *alu_result = (int64_t)src1 % (int64_t)src2; global_cycle_count += inst_fusion(s) ? -1 : 39);
+    INSTPAT("0000001 ????? ????? 111 ????? 01100 11", remu   , R, if (src2 == 0) *alu_result = src1; else *alu_result = src1 % src2; global_cycle_count += inst_fusion(s) ? -1 : 39);
 
     // MULW, DIVW, DIVUW, REMW, REMUW
     INSTPAT("0000001 ????? ????? 000 ????? 01110 11", mulw   , R, *alu_result = SEXT((int32_t)src1 * (int32_t)src2, 32));
     INSTPAT("0000001 ????? ????? 100 ????? 01110 11", divw   , R, if (src2 == 0) *alu_result = -1; else *alu_result = SEXT((int32_t)(int64_t)src1 / (int32_t)(int64_t)src2, 32); global_cycle_count += 39);
     INSTPAT("0000001 ????? ????? 101 ????? 01110 11", divuw  , R, if (src2 == 0) *alu_result = -1; else *alu_result = SEXT((uint32_t)(uint64_t)src1 / (uint32_t)(uint64_t)src2, 32); global_cycle_count += 39);
-    INSTPAT("0000001 ????? ????? 110 ????? 01110 11", remw   , R, if (src2 == 0) *alu_result = SEXT((uint32_t)src1, 32); else *alu_result = SEXT((int32_t)(int64_t)src1 % (int32_t)(int64_t)src2, 32); global_cycle_count += 39);
-    INSTPAT("0000001 ????? ????? 111 ????? 01110 11", remuw  , R, if (src2 == 0) *alu_result = SEXT((uint32_t)src1, 32); else *alu_result = SEXT((uint32_t)(uint64_t)src1 % (uint32_t)(uint64_t)src2, 32); global_cycle_count += 39);
+    INSTPAT("0000001 ????? ????? 110 ????? 01110 11", remw   , R, if (src2 == 0) *alu_result = SEXT((uint32_t)src1, 32); else *alu_result = SEXT((int32_t)(int64_t)src1 % (int32_t)(int64_t)src2, 32); global_cycle_count += inst_fusion(s) ? -1 : 39);
+    INSTPAT("0000001 ????? ????? 111 ????? 01110 11", remuw  , R, if (src2 == 0) *alu_result = SEXT((uint32_t)src1, 32); else *alu_result = SEXT((uint32_t)(uint64_t)src1 % (uint32_t)(uint64_t)src2, 32); global_cycle_count += inst_fusion(s) ? -1 : 39);
 
     //Invalid Opcode
     INSTPAT("??????? ????? ????? ??? ????? ????? ??", unk    , N, printf(ANSI_FMT("[Stage EX]Unknown Inst!\n", ANSI_FG_RED)), debug_mc(s), HALT(s->pc, -1));

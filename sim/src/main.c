@@ -21,7 +21,6 @@ int run_mc_model(int argc, char *argv[]);
 int run_pl_model(int argc, char *argv[]);
 
 int main(int argc, char *argv[]){
-    printf("argc: %d\n", argc);
     if (argc < 3) {
         printf("%s\n", help_string);
     }
@@ -115,6 +114,26 @@ error:
 }
 
 int run_pl_model(int argc, char *argv[]) {
-    // TODO: pipeline model
+    mem = (uint8_t *)malloc(MEM_SIZE);
+    check_mem(mem);
+    memset(mem, 0, MEM_SIZE);
+    
+    char image_file[128] = "";
+    sprintf(image_file, "test/build/%s.bin", argv[1]);
+    load_image(image_file);
+ 
+    if (argc > 2 && strcmp(argv[2], "--itrace") == 0) {
+        itrace_enabled = 1;
+        init_llvm_disassembler();
+    }
+
+    init_cpu();
+    pl_cpu_exec();
+
+    free(mem);
     return 0;
+
+error:
+    if(mem) free(mem);
+    return -1;
 }

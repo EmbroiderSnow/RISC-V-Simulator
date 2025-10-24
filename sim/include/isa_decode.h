@@ -21,6 +21,8 @@ typedef struct {
 } Decode;
 
 void decode_operand(Decode *s, int *rd, uint64_t *src1, uint64_t *src2, uint64_t *imm, DecodeType type);
+DecodeType get_inst_type(uint64_t inst);
+int is_load(uint64_t inst);
 
 #define R(i) (cpu.reg[i])
 #define Mr mem_read
