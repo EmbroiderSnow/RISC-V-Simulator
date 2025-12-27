@@ -1,14 +1,27 @@
-# RISC-V ISA Simulator
+# RISC-V Core Simulator (RV64IM)
 
-This project is a course assignment for the **Computer Architecture and Organization Lab** at **Peking University** in the **Fall semester of 2025**, developed as an extension of the framework provided by the course.
+> **Supporting Single-Cycle (ISS), Multi-Cycle, and 5-Stage Pipeline Models**
 
-## ✨ Features
+This project is a course assignment for the **Computer Architecture and Organization Lab** at **Peking University** (Fall 2025). It goes beyond a simple ISA simulator by implementing three distinct CPU microarchitecture models to demonstrate the evolution of processor design.
 
-* Implements a majority of the instructions from the RV64IM instruction set.
-* Implements the **`exit`** and **`write`** system calls (with `write` currently supporting output only to **stdout**), and enables the use of **`printf`** within the virtual RISC-V environment.
-* Includes a simple built-in debugger with support for single-stepping, printing registers, and scanning memory.
-* Supports function call tracing (**ftrace**).
-* Supports instruction execution history logging (**itrace**).
+## ✨ Key Features
+
+### 🏗️ Microarchitecture Models
+* **Instruction Set Simulator (ISS):** A functional simulator for the **RV64IM** instruction set, serving as the "Golden Reference" for correctness.
+* **Multi-Cycle Model:** Implements a **Finite State Machine (FSM)** driven CPU that breaks instruction execution into 5 sequential stages (IF, ID, EX, MEM, WB).
+* **5-Stage Pipeline:** A complex **Pipelined CPU** design featuring:
+    * **Hazard Handling:** Data Hazards (RAW) resolution via **Data Forwarding** and Load-Use Stalls (Bubbles).
+    * **Control Logic:** Branch prediction and flushing mechanisms.
+    * **Pipeline Registers:** Full implementation of IF/ID, ID/EX, EX/MEM, and MEM/WB state registers.
+
+### 🛠️ Runtime & Debugging Ecosystem
+* **System Calls:** Implements `ecall` handlers for `exit` and `write` (stdout), enabling standard C library functions like **`printf`** to run on bare metal.
+* **Interactive Debugger:** A built-in **GDB-style** debugger (REPL) supporting breakpoints, single-stepping, and register/memory inspection.
+* **Advanced Tracing:**
+    * **itrace:** Instruction-level trace logging powered by **LLVM** disassembly.
+    * **ftrace:** Function call graph tracing utilizing **Libelf** for symbol table parsing.
+
+---
 
 ```
 .
@@ -203,4 +216,5 @@ make clean
 | Instruction trace | `make itrace T=dummy`        |
 | Debug mode        | `make debug T=dummy`         |
 | Clean build files | `make clean`                 |
+
 
